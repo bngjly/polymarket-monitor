@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polymarket 聪明钱监控器 | Smart Money Monitor</title>
+    <meta name="description" content="实时追踪 Polymarket 高胜率交易者的持仓、交易活动和盈利排名">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <i class="fas fa-chart-line"></i>
+                <h1>PolyTracker</h1>
+            </div>
+            <span class="badge">聪明钱监控</span>
+        </div>
+        <div class="header-center">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="walletSearch" placeholder="输入钱包地址查询持仓…" spellcheck="false">
+                <button id="searchBtn" class="search-btn">查询</button>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="auto-refresh">
+                <label class="toggle-label">
+                    <input type="checkbox" id="autoRefreshToggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-text">自动刷新</span>
+            </div>
+            <div class="last-update" id="lastUpdate">
+                <i class="fas fa-clock"></i>
+                <span>等待加载…</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div class="filter-group">
+            <span class="filter-label">分类</span>
+            <div class="filter-buttons" id="categoryFilter">
+                <button class="filter-btn active" data-value="OVERALL">全部</button>
+                <button class="filter-btn" data-value="POLITICS">政治</button>
+                <button class="filter-btn" data-value="SPORTS">体育</button>
+                <button class="filter-btn" data-value="CRYPTO">加密</button>
+                <button class="filter-btn" data-value="FINANCE">金融</button>
+                <button class="filter-btn" data-value="CULTURE">文化</button>
+            </div>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">时间</span>
+            <div class="filter-buttons" id="timeFilter">
+                <button class="filter-btn" data-value="DAY">今日</button>
+                <button class="filter-btn" data-value="WEEK">本周</button>
+                <button class="filter-btn" data-value="MONTH">本月</button>
+                <button class="filter-btn active" data-value="ALL">全部</button>
+            </div>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">排序</span>
+            <div class="filter-buttons" id="orderFilter">
+                <button class="filter-btn active" data-value="PNL">盈亏</button>
+                <button class="filter-btn" data-value="VOL">交易量</button>
+            </div>
+        </div>
+        <div class="smart-money-shortcuts">
+            <span class="filter-label"><i class="fas fa-star"></i> 聪明钱</span>
+            <div class="shortcut-chips" id="smartMoneyChips">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Leaderboard Panel -->
+        <aside class="leaderboard-panel" id="leaderboardPanel">
+            <div class="panel-header">
+                <h2><i class="fas fa-trophy"></i> 排行榜</h2>
+                <button class="refresh-btn" id="refreshLeaderboard" title="刷新">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div class="leaderboard-list" id="leaderboardList">
+                <div class="loading-skeleton">
+                    <div class="skeleton-row"></div>
+                    <div class="skeleton-row"></div>
+                    <div class="skeleton-row"></div>
+                    <div class="skeleton-row"></div>
+                    <div class="skeleton-row"></div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Detail Panel -->
+        <section class="detail-panel" id="detailPanel">
+            <!-- Welcome State -->
+            <div class="welcome-state" id="welcomeState">
+                <div class="welcome-icon">
+                    <i class="fas fa-wallet"></i>
+                </div>
+                <h2>选择一个交易者</h2>
+                <p>从左侧排行榜点击任意用户，或在顶部搜索框输入钱包地址，查看其持仓和交易活动。</p>
+                <div class="welcome-stats" id="welcomeStats">
+                    <!-- Quick stats populated by JS -->
+                </div>
+            </div>
+
+            <!-- User Detail (hidden by default) -->
+            <div class="user-detail hidden" id="userDetail">
+                <!-- User Summary Card -->
+                <div class="user-summary-card" id="userSummaryCard">
+                    <div class="user-avatar" id="userAvatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <h2 id="userName">—</h2>
+                        <div class="user-address" id="userAddress">
+                            <code>—</code>
+                            <button class="copy-btn" id="copyAddress" title="复制地址">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="user-metrics">
+                        <div class="metric">
+                            <span class="metric-label">总盈亏</span>
+                            <span class="metric-value" id="userPnl">—</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">总交易量</span>
+                            <span class="metric-value" id="userVolume">—</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">排名</span>
+                            <span class="metric-value" id="userRank">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="detail-tabs">
+                    <button class="tab-btn active" data-tab="positions">
+                        <i class="fas fa-briefcase"></i> 当前持仓
+                    </button>
+                    <button class="tab-btn" data-tab="activity">
+                        <i class="fas fa-history"></i> 交易活动
+                    </button>
+                </div>
+
+                <!-- Positions Tab -->
+                <div class="tab-content active" id="positionsTab">
+                    <div class="positions-grid" id="positionsGrid">
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>加载持仓数据…</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Tab -->
+                <div class="tab-content" id="activityTab">
+                    <div class="activity-list" id="activityList">
+                        <div class="loading-spinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <span>加载交易活动…</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Error Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
