@@ -8,7 +8,7 @@ const API = {
 
 // Pre-configured "Smart Money" addresses
 const SMART_MONEY = [
-    { name: 'Theo4', address: '', tag: '88.9% 胜率' },
+    { name: 'Theo4', address: '0x56687bf447db6ffa42ffe2204a05edaa20f55839', tag: '88.9% 胜率' },
     { name: 'aenews2', address: '0x44c1dfe43260c94ed4f1d00de2e1f80fb113ebc1', tag: '数据驱动' },
     { name: 'YatSen', address: '0x5bffcf561bcae83af680ad600cb99f1184d6ffbe', tag: '政治赛道' },
     { name: 'ImJustKen', address: '0x9d84ce0306f8551e02efef1680475fc0f1dc1344', tag: '总盈利 #1' },
