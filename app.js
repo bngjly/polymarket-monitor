@@ -525,3 +525,59 @@ document.addEventListener('DOMContentLoaded', () => {
     initRefreshButton();
     loadLeaderboard();
 });
+
+// ===== Consensus Panel =====
+// Finds markets where multiple top traders hold the same side
+
+async function loadConsensus() {
+    const panel = $('#consensusPanel');
+    if (!panel) return;
+    panel.innerHTML = `<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><span>扫描共识信号…</span></div>`;
+
+    try {
+        const leaders = state.leaderboardData.slice(0, 15);
+        const marketMap = {};
+
+        await Promise.allSettled(leaders.map(async (user) => {
+            if (!user.proxyWallet) return;
+            try {
+                const positions = await apiFetch(API.DATA, '/positions', { user: user.proxyWallet, limit: 100 });
+                for (const p of positions) {
+                    const cid = p.conditionId;
+                    const end = p.endDate ? new Date(p.endDate) : null;
+                    if (!cid || !end || end < new Date()) continue;
+                    if (!marketMap[cid]) marketMap[cid] = { title: p.title || '', yes: 0, no: 0, totalSize: 0 };
+                    if (p.outcome === 'Yes') { marketMap[cid].yes++; marketMap[cid].totalSize += parseFloat(p.size || 0); }
+                    else if (p.outcome === 'No') { marketMap[cid].no++; marketMap[cid].totalSize += parseFloat(p.size || 0); }
+                }
+            } catch {}
+        }));
+
+        const signals = Object.entries(marketMap)
+            .map(([cid, d]) => {
+                const total = d.yes + d.no;
+                if (total < 2) return null;
+                const yesRatio = d.yes / total;
+                const direction = yesRatio >= 0.75 ? 'Yes' : yesRatio <= 0.25 ? 'No' : null;
+                if (!direction) return null;
+                return { cid, title: d.title, direction, holders: total, totalSize: d.totalSize };
+            })
+            .filter(Boolean)
+            .sort((a, b) => b.holders - a.holders);
+
+        if (!signals.length) {
+            panel.innerHTML = `<div class="empty-state"><i class="fas fa-search"></i><p>暂无共识信号（未来市场中持仓一致的大户 &lt; 2）</p></div>`;
+            return;
+        }
+
+        panel.innerHTML = signals.slice(0, 10).map((s, i) => `
+            <div class="consensus-item fade-in" style="animation-delay:${i*50}ms">
+                <span class="position-side ${s.direction === 'Yes' ? 'yes' : 'no'}">${s.direction}</span>
+                <div class="consensus-title">${s.title}</div>
+                <div class="consensus-meta">${s.holders} 大户 · ${formatVolume(s.totalSize)}</div>
+            </div>
+        `).join('');
+    } catch (e) {
+        panel.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>加载失败</p></div>`;
+    }
+}
