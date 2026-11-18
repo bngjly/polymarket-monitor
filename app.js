@@ -1,9 +1,10 @@
 // ===== Polymarket Smart Money Monitor =====
 // All API calls are public, no auth required.
 
-const API = {
-    DATA: 'https://data-api.polymarket.com',
-    GAMMA: 'https://gamma-api.polymarket.com',
+const DATA_API_FIELDS = {
+    '/leaderboard': { proxyWallet: 'user_id', userName: 'user_name', profileImage: 'profile_image', vol: 'volume' },
+    '/positions': { asset: 'token_id', size: 'current_size', curPrice: 'current_price', avgPrice: 'avg_price', conditionId: 'condition_id', endDate: 'end_date' },
+    '/activity': { usdcSize: 'usdc_size' },
 };
 
 // Pre-configured "Smart Money" addresses
@@ -56,7 +57,7 @@ function shortAddress(addr) {
 function timeAgo(dateStr) {
     if (!dateStr) return '';
     const now = new Date();
-    const date = new Date(dateStr);
+    const date = new Date(typeof dateStr === 'number' ? dateStr * 1000 : dateStr);
     const diff = Math.floor((now - date) / 1000);
     if (diff < 60) return `${diff}秒前`;
     if (diff < 3600) return `${Math.floor(diff / 60)}分前`;
@@ -77,8 +78,8 @@ function showToast(message, type = 'info') {
 }
 
 // ===== API Fetch Helper =====
-async function apiFetch(baseUrl, path, params = {}) {
-    const url = new URL(path, baseUrl);
+async function apiFetch(path, params = {}) {
+    const url = new URL('/api/polymarket' + path, location.origin);
     Object.entries(params).forEach(([k, v]) => {
         if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
     });
@@ -86,7 +87,13 @@ async function apiFetch(baseUrl, path, params = {}) {
     try {
         const res = await fetch(url.toString());
         if (!res.ok) throw new Error(`API error: ${res.status}`);
-        return await res.json();
+        const { data } = await res.json();
+        if (!Array.isArray(data)) throw new Error('Invalid Polymarket response');
+        const fields = Object.entries(DATA_API_FIELDS[path]);
+        return data.map(row => ({
+            ...row,
+            ...Object.fromEntries(fields.map(([local, remote]) => [local, row[remote]])),
+        }));
     } catch (err) {
         console.error(`Fetch failed: ${url}`, err);
         throw err;
@@ -102,10 +109,10 @@ async function loadLeaderboard() {
     list.innerHTML = `<div class="loading-skeleton">${'<div class="skeleton-row"></div>'.repeat(8)}</div>`;
 
     try {
-        const data = await apiFetch(API.DATA, '/v1/leaderboard', {
-            category: state.category,
-            timePeriod: state.timePeriod,
-            orderBy: state.orderBy,
+        const data = await apiFetch('/leaderboard', {
+            category: state.category.toLowerCase(),
+            time_period: state.timePeriod.toLowerCase(),
+            sort_by: state.orderBy === 'VOL' ? 'VOLUME' : 'PNL',
             limit: 50,
         });
 
@@ -239,19 +246,20 @@ async function loadPositions(wallet) {
     grid.innerHTML = `<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><span>加载持仓数据…</span></div>`;
 
     try {
-        const data = await apiFetch(API.DATA, '/positions', {
+        const data = await apiFetch('/positions', {
             user: wallet,
             limit: 50,
-            sortBy: 'VALUE',
-            sizeThreshold: 0.01,
+            sort_by: 'CURRENT_VALUE',
+            sort_direction: 'DESC',
         });
 
-        if (!data || data.length === 0) {
+        const positions = data.filter(position => position.size >= 0.01);
+        if (positions.length === 0) {
             grid.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>该地址暂无活跃持仓</p></div>`;
             return;
         }
 
-        grid.innerHTML = data.map((pos, idx) => {
+        grid.innerHTML = positions.map((pos, idx) => {
             const title = pos.title || pos.market?.question || `Market ${pos.asset || ''}`;
             const size = parseFloat(pos.size || 0);
             const curPrice = parseFloat(pos.curPrice || pos.price || 0);
@@ -298,7 +306,7 @@ async function loadActivity(wallet) {
     list.innerHTML = `<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><span>加载交易活动…</span></div>`;
 
     try {
-        const data = await apiFetch(API.DATA, '/activity', {
+        const data = await apiFetch('/activity', {
             user: wallet,
             limit: 50,
         });
@@ -309,7 +317,7 @@ async function loadActivity(wallet) {
         }
 
         list.innerHTML = data.map((act, idx) => {
-            const type = (act.type || act.action || '').toLowerCase();
+            const type = (act.type === 'TRADE' ? act.side : act.type || act.action || '').toLowerCase();
             let iconClass = 'other';
             let icon = 'fa-exchange-alt';
 
@@ -541,7 +549,7 @@ async function loadConsensus() {
         await Promise.allSettled(leaders.map(async (user) => {
             if (!user.proxyWallet) return;
             try {
-                const positions = await apiFetch(API.DATA, '/positions', { user: user.proxyWallet, limit: 100 });
+                const positions = await apiFetch('/positions', { user: user.proxyWallet, limit: 100 });
                 for (const p of positions) {
                     const cid = p.conditionId;
                     const end = p.endDate ? new Date(p.endDate) : null;

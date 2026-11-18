@@ -14,30 +14,28 @@
 
 ## 🛠️ 技术栈
 
-- **纯前端**：HTML + CSS + JavaScript（零框架依赖）
-- **API**：Polymarket Data API + Gamma API（公开免费，无需认证）
+- **前端**：HTML + CSS + JavaScript（零框架依赖）
+- **API**：Vercel 将同域 `/api/polymarket/` 下的排行榜、持仓和活动请求转发到 Polymarket Data API v2
 - **设计**：深色 Glassmorphism 主题，响应式布局
 
 ## 🚀 快速启动
 
 ```bash
 # 克隆仓库
-git clone https://github.com/YOUR_USERNAME/polymarket-monitor.git
+git clone https://github.com/bngjly/polymarket-monitor.git
 cd polymarket-monitor
 
-# 启动本地服务器（任选一种）
-python -m http.server 8080
-# 或
-npx serve .
+# 启动带 API 转发的本地开发环境
+npx vercel dev
 
 # 在浏览器中打开
-# http://localhost:8080
+# http://localhost:3000
 ```
 
 ## ⚠️ 注意事项
 
-- 如遇 CORS 限制，建议安装浏览器插件 [CORS Unblock](https://chrome.google.com/webstore/detail/cors-unblock/) 或使用代理
 - Polymarket API 为公开接口，无需 API Key
+- 运行 `node data-api.test.cjs` 检查 v2 响应适配
 
 ## 📄 License
 
