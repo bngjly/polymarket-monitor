@@ -78,8 +78,10 @@ function showToast(message, type = 'info') {
 }
 
 // ===== API Fetch Helper =====
+const DATA_API_ORIGIN = 'https://polymarket-monitor-bngjly-1941s-projects.vercel.app';
+
 async function apiFetch(path, params = {}) {
-    const url = new URL('/api/polymarket' + path, location.origin);
+    const url = new URL('/api/polymarket' + path, DATA_API_ORIGIN);
     Object.entries(params).forEach(([k, v]) => {
         if (v !== undefined && v !== null && v !== '') url.searchParams.set(k, v);
     });

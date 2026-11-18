@@ -15,7 +15,7 @@
 ## 🛠️ 技术栈
 
 - **前端**：HTML + CSS + JavaScript（零框架依赖）
-- **API**：Vercel 将同域 `/api/polymarket/` 下的排行榜、持仓和活动请求转发到 Polymarket Data API v2
+- **部署**：GitHub Pages 托管 `sexdao.com` 的静态页面。Vercel 独立提供公开只读的排行榜、持仓和活动接口，并将请求转发到 Polymarket Data API v2。
 - **设计**：深色 Glassmorphism 主题，响应式布局
 
 ## 🚀 快速启动
@@ -25,11 +25,11 @@
 git clone https://github.com/bngjly/polymarket-monitor.git
 cd polymarket-monitor
 
-# 启动带 API 转发的本地开发环境
-npx vercel dev
+# 启动本地静态页面，数据请求走已部署的 Vercel 接口
+python -m http.server 8080
 
 # 在浏览器中打开
-# http://localhost:3000
+# http://localhost:8080
 ```
 
 ## ⚠️ 注意事项

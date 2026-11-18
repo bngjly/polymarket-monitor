@@ -12,6 +12,7 @@ const context = vm.createContext({
     document: { addEventListener() {} },
     fetch: async (input) => {
         const url = new URL(input);
+        assert.equal(url.origin, 'https://polymarket-monitor-bngjly-1941s-projects.vercel.app');
         const key = url.pathname.split('/').at(-1);
         assert.equal(url.pathname, '/api/polymarket/' + key);
         assert.ok(rows[key]);
