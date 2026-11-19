@@ -15,7 +15,7 @@
 ## 🛠️ 技术栈
 
 - **前端**：HTML + CSS + JavaScript（零框架依赖）
-- **部署**：GitHub Pages 托管 `sexdao.com` 的静态页面。Vercel 独立提供公开只读的排行榜、持仓和活动接口，并将请求转发到 Polymarket Data API v2。
+- **部署**：GitHub Pages 托管 `sexdao.com` 的静态页面。独立的 Vercel 函数从服务端请求 Polymarket Data API v2，为网站提供公开只读的排行榜、持仓和活动接口。
 - **设计**：深色 Glassmorphism 主题，响应式布局
 
 ## 🚀 快速启动

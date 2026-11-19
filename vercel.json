@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/polymarket/:endpoint(leaderboard|positions|activity)",
-      "destination": "https://data-api.polymarket.com/v2/:endpoint"
+      "destination": "/api/data?endpoint=:endpoint"
     }
   ]
 }
